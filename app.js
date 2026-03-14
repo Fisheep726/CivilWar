@@ -11,8 +11,40 @@ let currentSort = {
 
 // 扫描 data 目录获取所有 JSON 文件
 async function scanDataDirectory() {
+    // 第一优先级：尝试读取 data/index.json（推荐的目录索引方式）
     try {
-        // 尝试加载 data 目录下的索引文件
+        const indexResponse = await fetch('data/index.json');
+        if (indexResponse.ok) {
+            const indexData = await indexResponse.json();
+            DATA_FILES = indexData.files.map(f => f.filename) || [];
+            console.log(`📋 从 data/index.json 加载 ${DATA_FILES.length} 个文件:`, DATA_FILES);
+            
+            if (DATA_FILES.length > 0) {
+                return true;
+            }
+        }
+    } catch (error) {
+        console.log('ℹ️ 未找到 data/index.json，将尝试其他方式');
+    }
+    
+    // 第二优先级：使用 file-list.json（兼容旧版本）
+    try {
+        const fileListResponse = await fetch('data/file-list.json');
+        if (fileListResponse.ok) {
+            const fileList = await fileListResponse.json();
+            DATA_FILES = fileList.files || [];
+            console.log(`📋 从 data/file-list.json 加载 ${DATA_FILES.length} 个文件:`, DATA_FILES);
+            
+            if (DATA_FILES.length > 0) {
+                return true;
+            }
+        }
+    } catch (error) {
+        console.warn('⚠️ 读取 file-list.json 失败，将尝试自动扫描');
+    }
+    
+    // 第三优先级：尝试自动扫描目录（仅部分本地服务器支持）
+    try {
         const response = await fetch('data/');
         if (response.ok) {
             const html = await response.text();
@@ -25,24 +57,14 @@ async function scanDataDirectory() {
                 .filter(href => href && (href.endsWith('.json') || !href.includes('.')))
                 .filter(href => !href.startsWith('.') && href !== '../' && href !== './');
             
-            console.log(`📁 扫描到 ${DATA_FILES.length} 个数据文件:`, DATA_FILES);
-            return true;
+            console.log(`📁 自动扫描到 ${DATA_FILES.length} 个数据文件:`, DATA_FILES);
+            
+            if (DATA_FILES.length > 0) {
+                return true;
+            }
         }
     } catch (error) {
-        console.warn('⚠️ 无法自动扫描目录，使用备用方案:', error.message);
-    }
-    
-    // 备用方案：手动指定文件列表
-    try {
-        const fileListResponse = await fetch('data/file-list.json');
-        if (fileListResponse.ok) {
-            const fileList = await fileListResponse.json();
-            DATA_FILES = fileList.files || [];
-            console.log(`📋 从 file-list.json 加载 ${DATA_FILES.length} 个文件`);
-            return true;
-        }
-    } catch (error) {
-        console.log('ℹ️ 未找到 file-list.json，将尝试加载常见文件名');
+        console.warn('⚠️ 无法自动扫描目录，服务器不支持目录列表功能');
     }
     
     // 最后的备用方案：使用硬编码的常见文件名
