@@ -1,0 +1,33 @@
+{
+  "name": "S2 内战数据文件索引",
+  "description": "自动生成的数据文件列表，用于 GitHub Pages 部署",
+  "generated_at": "2024-03-14",
+  "files": [
+    {
+      "filename": "0308_200737",
+      "description": "3 月 8 日 20:07 比赛数据"
+    },
+    {
+      "filename": "0308_204152",
+      "description": "3 月 8 日 20:41 比赛数据"
+    },
+    {
+      "filename": "0308_211943",
+      "description": "3 月 8 日 21:19 比赛数据"
+    },
+    {
+      "filename": "0308_221011",
+      "description": "3 月 8 日 22:10 比赛数据"
+    },
+    {
+      "filename": "0311_200317",
+      "description": "3 月 11 日 20:03 比赛数据"
+    },
+    {
+      "filename": "0311_205642",
+      "description": "3 月 11 日 20:56 比赛数据"
+    }
+  ],
+  "total_files": 6,
+  "usage": "此文件用于在 GitHub Pages 等不支持目录扫描的环境中提供数据文件列表"
+}
