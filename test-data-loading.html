@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据加载测试</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .file-list {
+            list-style: none;
+            padding: 0;
+        }
+        .file-list li {
+            padding: 8px 15px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-left: 3px solid #667eea;
+            font-family: monospace;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #764ba2;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 数据文件加载测试</h1>
+        
+        <div id="testResults"></div>
+        
+        <button onclick="runTest()" id="testButton">开始测试</button>
+    </div>
+
+    <script>
+        async function runTest() {
+            const testButton = document.getElementById('testButton');
+            const testResults = document.getElementById('testResults');
+            
+            testButton.disabled = true;
+            testResults.innerHTML = '<div class="info">⏳ 正在测试数据加载...</div>';
+            
+            const results = [];
+            
+            // 测试 1: 检查 file-list.json
+            try {
+                const response = await fetch('data/file-list.json');
+                if (response.ok) {
+                    const fileList = await response.json();
+                    results.push(`<div class="success">✅ 成功加载 file-list.json</div>`);
+                    results.push(`<div class="info">📋 找到 ${fileList.files.length} 个文件:</div>`);
+                    results.push('<ul class="file-list">');
+                    fileList.files.forEach(file => {
+                        results.push(`<li>📄 ${file}</li>`);
+                    });
+                    results.push('</ul>');
+                } else {
+                    results.push('<div class="error">❌ file-list.json 不存在或无法访问</div>');
+                }
+            } catch (error) {
+                results.push(`<div class="error">❌ file-list.json 错误：${error.message}</div>`);
+            }
+            
+            // 测试 2: 尝试扫描 data 目录
+            try {
+                const dirResponse = await fetch('data/');
+                if (dirResponse.ok) {
+                    const html = await dirResponse.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const links = doc.querySelectorAll('a');
+                    
+                    const files = Array.from(links)
+                        .map(link => link.getAttribute('href'))
+                        .filter(href => href && (href.endsWith('.json') || !href.includes('.')))
+                        .filter(href => !href.startsWith('.') && href !== '../' && href !== './');
+                    
+                    results.push(`<div class="success">✅ 成功扫描 data 目录</div>`);
+                    results.push(`<div class="info">📁 扫描到 ${files.length} 个文件:</div>`);
+                    results.push('<ul class="file-list">');
+                    files.forEach(file => {
+                        results.push(`<li>📄 ${file}</li>`);
+                    });
+                    results.push('</ul>');
+                } else {
+                    results.push('<div class="info">ℹ️ 服务器不支持目录浏览，将使用 file-list.json</div>');
+                }
+            } catch (error) {
+                results.push(`<div class="info">ℹ️ 无法扫描目录：${error.message}</div>`);
+            }
+            
+            // 测试 3: 直接测试加载每个文件
+            const filesToTest = [
+                'data/0311_200317',
+                'data/0311_205642'
+            ];
+            
+            for (const file of filesToTest) {
+                try {
+                    const response = await fetch(file);
+                    if (response.ok) {
+                        const data = await response.json();
+                        const playerCount = data.data?.wgBattleDetailInfo?.length || 0;
+                        results.push(`<div class="success">✅ ${file} - 加载成功 (${playerCount} 名选手)</div>`);
+                    } else {
+                        results.push(`<div class="error">❌ ${file} - 加载失败 (${response.status})</div>`);
+                    }
+                } catch (error) {
+                    results.push(`<div class="error">❌ ${file} - 错误：${error.message}</div>`);
+                }
+            }
+            
+            testResults.innerHTML = results.join('');
+            testButton.disabled = false;
+            testButton.textContent = '重新测试';
+        }
+        
+        // 页面加载时自动运行一次测试
+        window.addEventListener('DOMContentLoaded', runTest);
+    </script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S2 内战选手数据分析面板</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎮 S2 内战选手数据分析面板</h1>
+            <p class="subtitle">英雄联盟比赛数据统计 - 多场比赛综合分析</p>
+        </header>
+
+        <div class="filter-section">
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-position="all">全部</button>
+                <button class="filter-btn" data-position="TOP">上单</button>
+                <button class="filter-btn" data-position="JUNGLE">打野</button>
+                <button class="filter-btn" data-position="MIDDLE">中单</button>
+                <button class="filter-btn" data-position="BOTTOM">下路</button>
+                <button class="filter-btn" data-position="UTILITY">辅助</button>
+            </div>
+        </div>
+
+        <div class="players-section">
+            <h2>👥 选手详细数据</h2>
+            <div class="table-container">
+                <table class="players-table">
+                    <thead>
+                        <tr>
+                            <th data-sort="nickName">选手 ID ⬍</th>
+                            <th data-sort="totalGames">场次 ⬍</th>
+                            <th data-sort="positions">位置 ⬍</th>
+                            <th data-sort="winRate">胜率 ⬍</th>
+                            <th data-sort="averageScore">评分 ⬍</th>
+                            <th data-sort="averageKDA">KDA ⬍</th>
+                            <th data-sort="averageKills">场均击杀 ⬍</th>
+                            <th data-sort="averageDeaths">场均死亡 ⬍</th>
+                            <th data-sort="averageAssists">场均助攻 ⬍</th>
+                            <th data-sort="averageGoldDiff">对位经济差 ⬍</th>
+                            <th data-sort="averageLevelDiff">对位等级差 ⬍</th>
+                        </tr>
+                    </thead>
+                    <tbody id="playersTableBody">
+                        <!-- 选手数据将通过 JS 动态生成 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="charts-section">
+            <h2>📈 数据可视化</h2>
+            
+            <div class="comparison-selector">
+                <div class="player-select-wrapper">
+                    <label for="player1Select">选手 1：</label>
+                    <select id="player1Select"></select>
+                </div>
+                
+                <div class="vs-divider">VS</div>
+                
+                <div class="player-select-wrapper">
+                    <label for="player2Select">选手 2：</label>
+                    <select id="player2Select"></select>
+                </div>
+            </div>
+            
+            <div class="comparison-container">
+                <div class="comparison-view" style="grid-column: span 2;">
+                    <div class="chart-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3 id="player1Name">选手 1</h3>
+                        <span style="font-size: 1.5em; font-weight: bold; color: #dc3545;">VS</span>
+                        <h3 id="player2Name">选手 2</h3>
+                    </div>
+                    
+                    <!-- KDA 对比条 -->
+                    <div class="bar-comparison">
+                        <div class="bar-label">KDA</div>
+                        <div class="bar-container">
+                            <div class="bar-segment player1-bar" id="p1KdaBar"></div>
+                            <div class="bar-segment player2-bar" id="p2KdaBar"></div>
+                        </div>
+                        <div class="bar-values">
+                            <span class="player1-value" id="p1KdaValue">0</span>
+                            <span class="player2-value" id="p2KdaValue">0</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 场均击杀对比条 -->
+                    <div class="bar-comparison">
+                        <div class="bar-label">场均击杀</div>
+                        <div class="bar-container">
+                            <div class="bar-segment player1-bar" id="p1KillsBar"></div>
+                            <div class="bar-segment player2-bar" id="p2KillsBar"></div>
+                        </div>
+                        <div class="bar-values">
+                            <span class="player1-value" id="p1KillsValue">0</span>
+                            <span class="player2-value" id="p2KillsValue">0</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 场均死亡对比条 -->
+                    <div class="bar-comparison">
+                        <div class="bar-label">场均死亡</div>
+                        <div class="bar-container">
+                            <div class="bar-segment player1-bar" id="p1DeathsBar"></div>
+                            <div class="bar-segment player2-bar" id="p2DeathsBar"></div>
+                        </div>
+                        <div class="bar-values">
+                            <span class="player1-value" id="p1DeathsValue">0</span>
+                            <span class="player2-value" id="p2DeathsValue">0</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 场均助攻对比条 -->
+                    <div class="bar-comparison">
+                        <div class="bar-label">场均助攻</div>
+                        <div class="bar-container">
+                            <div class="bar-segment player1-bar" id="p1AssistsBar"></div>
+                            <div class="bar-segment player2-bar" id="p2AssistsBar"></div>
+                        </div>
+                        <div class="bar-values">
+                            <span class="player1-value" id="p1AssistsValue">0</span>
+                            <span class="player2-value" id="p2AssistsValue">0</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 场均经济对比条 -->
+                    <div class="bar-comparison">
+                        <div class="bar-label">场均对位经济差</div>
+                        <div class="bar-container">
+                            <div class="bar-segment player1-bar" id="p1GoldDiffBar"></div>
+                            <div class="bar-segment player2-bar" id="p2GoldDiffBar"></div>
+                        </div>
+                        <div class="bar-values">
+                            <span class="player1-value" id="p1GoldDiffValue">0</span>
+                            <span class="player2-value" id="p2GoldDiffValue">0</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 平均评分对比条 -->
+                    <div class="bar-comparison">
+                        <div class="bar-label">场均对位等级差</div>
+                        <div class="bar-container">
+                            <div class="bar-segment player1-bar" id="p1LevelDiffBar"></div>
+                            <div class="bar-segment player2-bar" id="p2LevelDiffBar"></div>
+                        </div>
+                        <div class="bar-values">
+                            <span class="player1-value" id="p1LevelDiffValue">0</span>
+                            <span class="player2-value" id="p2LevelDiffValue">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // 页面加载时自动加载所有数据
+        window.addEventListener('DOMContentLoaded', () => {
+            loadAllGameData();
+        });
+    </script>
+</body>
+</html>

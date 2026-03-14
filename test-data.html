@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据加载测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+        .success {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+        .warning {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+        .info {
+            background: #d1ecf1;
+            border-color: #17a2b8;
+            color: #0c5460;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 数据加载测试工具</h1>
+        
+        <div id="testResults"></div>
+        
+        <div style="margin-top: 30px;">
+            <h3>操作说明：</h3>
+            <ol>
+                <li>点击"开始测试"按钮检查数据文件</li>
+                <li>如果显示红色错误，说明无法直接访问 JSON 文件</li>
+                <li>需要使用本地服务器运行主页面</li>
+            </ol>
+            
+            <button onclick="testDataFiles()">开始测试</button>
+            <button onclick="window.location.href='index.html'">打开主页面</button>
+        </div>
+    </div>
+
+    <script>
+        const DATA_FILES = ['0314.json', '0311_205642.json'];
+        
+        async function testDataFiles() {
+            const resultsDiv = document.getElementById('testResults');
+            resultsDiv.innerHTML = '<div class="info">🔄 开始测试...</div>';
+            
+            let successCount = 0;
+            let errorCount = 0;
+            let results = [];
+            
+            for (const file of DATA_FILES) {
+                try {
+                    const response = await fetch(file);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    const data = await response.json();
+                    
+                    // 验证数据结构
+                    if (!data.data || !data.data.wgBattleDetailInfo) {
+                        throw new Error('数据格式不正确');
+                    }
+                    
+                    const playerCount = data.data.wgBattleDetailInfo.length;
+                    results.push({
+                        file: file,
+                        status: 'success',
+                        message: `✅ ${file} - 成功加载 (${playerCount}名选手)`,
+                        details: `游戏类型：${data.data.gameType}, 模式：${data.data.gameMode}`
+                    });
+                    successCount++;
+                } catch (error) {
+                    results.push({
+                        file: file,
+                        status: 'error',
+                        message: `❌ ${file} - 加载失败`,
+                        details: error.message
+                    });
+                    errorCount++;
+                }
+            }
+            
+            // 显示结果
+            resultsDiv.innerHTML = '';
+            
+            if (errorCount > 0 && successCount === 0) {
+                resultsDiv.innerHTML += `
+                    <div class="error">
+                        <strong>⚠️ 所有文件都无法加载！</strong><br>
+                        这是因为浏览器的安全策略限制。<br><br>
+                        <strong>解决方案：</strong><br>
+                        1. 使用本地 HTTP 服务器（推荐）<br>
+                        2. 部署到 GitHub Pages
+                    </div>
+                `;
+            } else if (errorCount > 0) {
+                resultsDiv.innerHTML += `
+                    <div class="warning">
+                        <strong>⚠️ 部分文件加载失败</strong><br>
+                        成功：${successCount}, 失败：${errorCount}
+                    </div>
+                `;
+            } else {
+                resultsDiv.innerHTML += `
+                    <div class="success">
+                        <strong>✅ 所有文件加载成功！</strong><br>
+                        共加载 ${successCount} 个数据文件
+                    </div>
+                `;
+            }
+            
+            results.forEach(result => {
+                const div = document.createElement('div');
+                div.className = `status ${result.status}`;
+                div.innerHTML = `<strong>${result.message}</strong><br><pre>${result.details}</pre>`;
+                resultsDiv.appendChild(div);
+            });
+            
+            if (errorCount > 0) {
+                resultsDiv.innerHTML += `
+                    <div class="info" style="margin-top: 20px;">
+                        <strong>💡 如何启动本地服务器：</strong><br><br>
+                        <strong>方法 1：使用 Python（如果你有 Python）</strong><br>
+                        打开命令行，进入项目目录，运行：<br>
+                        <pre>python -m http.server 8080</pre><br>
+                        然后访问：http://localhost:8080/index.html<br><br>
+                        
+                        <strong>方法 2：使用 Node.js（如果你有 Node.js）</strong><br>
+                        安装 http-server: <pre>npm install -g http-server</pre><br>
+                        运行：<pre>http-server -p 8080</pre><br>
+                        然后访问：http://localhost:8080/index.html<br><br>
+                        
+                        <strong>方法 3：直接使用 VS Code 的 Live Server 插件</strong><br>
+                        右键 index.html → Open with Live Server
+                    </div>
+                `;
+            }
+        }
+        
+        // 自动运行测试
+        window.addEventListener('DOMContentLoaded', testDataFiles);
+    </script>
+</body>
+</html>
